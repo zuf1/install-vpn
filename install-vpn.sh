@@ -3,7 +3,7 @@
 #  INSTALL VPN ALL-IN-ONE — Debian / Ubuntu (VPS)
 #  ----------------------------------------------------------------------------
 #  Yang diinstall dalam satu script:
-#    1. 3x-ui   (panel Xray) -> VMess, VLESS, Trojan, Shadowsocks, Reality, dll
+#    1. ZET UI (panel Xray, fork 3x-ui) -> VMess, VLESS, Trojan, Shadowsocks, Reality, dll
 #       + opsional SSL Let's Encrypt untuk panel (domain atau IP)
 #    2. OpenVPN -> server + file client (.ovpn) siap pakai
 #    3. L2TP/IPsec (Libreswan + xl2tpd) -> PSK/user/password dibuat otomatis
@@ -56,7 +56,7 @@
 #    - Buka port di panel VPS provider: 22/tcp, 54321/tcp (panel), 80/tcp (SSL),
 #      1194/udp (OpenVPN), 500/udp+4500/udp+1701/udp (L2TP/IPsec),
 #      500/udp+4500/udp (IKEv2/IPsec), 51820/udp (WireGuard).
-#    - Port inbound Xray (VMess/VLESS/Trojan/SS) dibuat dari panel 3x-ui;
+#    - Port inbound Xray (VMess/VLESS/Trojan/SS) dibuat dari panel ZET UI;
 #      jangan lupa buka port-nya juga di panel VPS provider.
 #    - IKEv2 & L2TP/IPsec pakai port yang sama (500/4500/udp); jangan diinstall
 #      bersamaan jika tidak perlu (keduanya pakai strongSwan/libreswan).
@@ -179,10 +179,10 @@ human_bytes() {
 usage() {
   cat <<'EOF'
 Cara pakai:
-  bash install-vpn.sh                        # install semua: 3x-ui + OpenVPN + L2TP/IPsec + WireGuard + Shadowsocks + SSH
+  bash install-vpn.sh                        # install semua: ZET UI + OpenVPN + L2TP/IPsec + WireGuard + Shadowsocks + SSH
   bash install-vpn.sh add-client NAMA        # (alias) tambah client OpenVPN
   bash install-vpn.sh user <svc> <aksi> [nama] [password]
-  bash install-vpn.sh panel check            # cek panel 3x-ui + konflik port inbound
+  bash install-vpn.sh panel check            # cek panel ZET UI + konflik port inbound
   bash install-vpn.sh uninstall              # hapus SEMUA layanan VPN (SSH tetap)
   bash install-vpn.sh help                   # bantuan ini
 
@@ -267,7 +267,7 @@ install_base() {
 }
 
 # ---------------------------------------------------------------------------
-# 3. Pilihan SSL untuk panel 3x-ui
+# 3. Pilihan SSL untuk panel ZET UI
 # ---------------------------------------------------------------------------
 prompt_ssl() {
   section "3. Konfigurasi SSL panel (opsional)"
@@ -286,7 +286,7 @@ prompt_ssl() {
   [[ -t 0 ]] || return 0   # non-TTY -> lewati prompt
 
   echo
-  echo "  SSL hanya dipasang saat 3x-ui fresh install."
+  echo "  SSL hanya dipasang saat ZET UI fresh install."
   echo "  1) Domain  — Let's Encrypt 90 hari (auto-renew). Butuh domain + port 80 terbuka"
   echo "  2) IP      — Let's Encrypt ~6 hari (auto-renew). Butuh port 80 terbuka"
   echo "  3) Lewati  — panel tetap HTTP (default)"
@@ -312,18 +312,18 @@ prompt_ssl() {
 }
 
 # ---------------------------------------------------------------------------
-# 4. Install 3x-ui (panel Xray)
+# 4. Install ZET UI (panel Xray)
 # ---------------------------------------------------------------------------
 install_xui() {
-  section "4. Install 3x-ui (panel Xray)"
+  section "4. Install ZET UI (panel Xray)"
 
   if [[ -d /usr/local/x-ui ]]; then
-    warn "3x-ui sudah terinstall, dilewati (SSL tidak diterapkan ulang)."
+    warn "ZET UI sudah terinstall, dilewati (SSL tidak diterapkan ulang)."
   else
-    info "Mengunduh installer 3x-ui..."
-    curl -Ls -o /tmp/3x-ui-install.sh https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh \
-      || fail "Gagal mengunduh installer 3x-ui."
-    [[ -s /tmp/3x-ui-install.sh ]] || fail "Installer 3x-ui kosong (gagal diunduh)."
+    info "Mengunduh installer ZET UI..."
+    curl -Ls -o /tmp/3x-ui-install.sh https://raw.githubusercontent.com/zuf1/zet-ui/main/install.sh \
+      || fail "Gagal mengunduh installer ZET UI."
+    [[ -s /tmp/3x-ui-install.sh ]] || fail "Installer ZET UI kosong (gagal diunduh)."
     chmod +x /tmp/3x-ui-install.sh
     if [[ "$SSL_MODE" == "domain" ]]; then
       XUI_NONINTERACTIVE=1 XUI_SSL_MODE=domain XUI_DOMAIN="$SSL_DOMAIN" bash /tmp/3x-ui-install.sh
@@ -333,7 +333,7 @@ install_xui() {
       XUI_NONINTERACTIVE=1 bash /tmp/3x-ui-install.sh
     fi
     rm -f /tmp/3x-ui-install.sh
-    ok "3x-ui terinstall."
+    ok "ZET UI terinstall."
   fi
 
   # Ambil kredensial panel dari file hasil install (mode non-interaktif)
@@ -348,7 +348,7 @@ install_xui() {
 
   systemctl enable x-ui >/dev/null 2>&1 || true
   systemctl restart x-ui >/dev/null 2>&1 || true
-  ok "Panel 3x-ui aktif (port $PANEL_PORT)."
+  ok "Panel ZET UI aktif (port $PANEL_PORT)."
 }
 
 # ---------------------------------------------------------------------------
@@ -1411,7 +1411,7 @@ setup_firewall() {
   fi
 
   if [[ $FW_OPENED -eq 1 ]]; then
-    warn "CATATAN: port inbound Xray (VMess/VLESS/Trojan/SS) yang nanti dibuat di panel 3x-ui juga harus diizinkan di firewall & panel VPS provider."
+    warn "CATATAN: port inbound Xray (VMess/VLESS/Trojan/SS) yang nanti dibuat di panel ZET UI juga harus diizinkan di firewall & panel VPS provider."
   fi
 }
 
@@ -1422,7 +1422,7 @@ save_credentials() {
   local f="/root/vpn-credentials.txt"
   umask 077
   {
-    echo "=== 3X-UI (XRAY PANEL) ==="
+    echo "=== ZET UI (XRAY PANEL) ==="
     echo "Panel URL  : $ACCESS_URL"
     echo "Username   : $PANEL_USER"
     echo "Password   : $PANEL_PASS"
@@ -1477,7 +1477,7 @@ save_credentials() {
 
 print_summary() {
   echo
-  echo -e "${green}=========================== 3X-UI (XRAY) ===========================${plain}"
+  echo -e "${green}=========================== ZET UI (XRAY) ===========================${plain}"
   echo -e "  Panel        : ${cyan}$ACCESS_URL${plain}"
   echo -e "  Username     : ${cyan}$PANEL_USER${plain}"
   echo -e "  Password     : ${cyan}$PANEL_PASS${plain}"
@@ -1539,19 +1539,19 @@ print_summary() {
 }
 
 # ---------------------------------------------------------------------------
-# Cek panel 3x-ui: status layanan + konflik port inbound vs layanan sistem.
+# Cek panel ZET UI: status layanan + konflik port inbound vs layanan sistem.
 # Mencegah bug: inbound panel yang memakai port layanan VPN/web (mis. 51820)
 # membuat xray crash-loop dan mematikan SEMUA layanan VPN.
 # ---------------------------------------------------------------------------
 panel_check_conflicts() {
   section "CEK PANEL 3x-UI & KONFLIK PORT INBOUND"
-  [[ -d /usr/local/x-ui ]] || { warn "3x-ui belum terinstall."; return 1; }
+  [[ -d /usr/local/x-ui ]] || { warn "ZET UI belum terinstall."; return 1; }
 
   # status layanan
   if systemctl is-active x-ui >/dev/null 2>&1; then
-    ok "Panel 3x-ui      : aktif"
+    ok "Panel ZET UI    : aktif"
   else
-    warn "Panel 3x-ui      : TIDAK aktif!"
+    warn "Panel ZET UI    : TIDAK aktif!"
   fi
   if pgrep -f "xray-linux" >/dev/null 2>&1; then
     ok "Xray (core)      : berjalan"
@@ -1717,7 +1717,7 @@ manage_users() {
 # ---------------------------------------------------------------------------
 uninstall_vpn() {
   section "UNINSTALL VPN ALL-IN-ONE"
-  warn "Ini akan MENGHAPUS SEMUA layanan VPN: 3x-ui, OpenVPN, L2TP/IPsec, IKEv2/IPsec, WireGuard, Shadowsocks."
+  warn "Ini akan MENGHAPUS SEMUA layanan VPN: ZET UI, OpenVPN, L2TP/IPsec, IKEv2/IPsec, WireGuard, Shadowsocks."
   warn "Paket yang ikut dihapus: openvpn, easy-rsa, libreswan, xl2tpd, strongswan, wireguard, shadowsocks-libev, qrencode."
   warn "SSH TIDAK akan dihapus."
 
@@ -1751,13 +1751,13 @@ uninstall_vpn() {
     systemctl disable --now "shadowsocks-libev-server@$(basename "$f" .json)" >/dev/null 2>&1 || true
   done
 
-  # 2) 3x-ui (Xray)
+  # 2) ZET UI (Xray)
   if [[ -d /usr/local/x-ui ]]; then
-    info "Menghapus 3x-ui (Xray)..."
+    info "Menghapus ZET UI (Xray)..."
     rm -f /etc/systemd/system/x-ui.service /usr/bin/x-ui /etc/default/x-ui
     rm -rf /usr/local/x-ui /etc/x-ui /root/cert
     systemctl daemon-reload
-    ok "3x-ui dihapus."
+    ok "ZET UI dihapus."
   fi
 
   # 3) OpenVPN

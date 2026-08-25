@@ -9,7 +9,7 @@ Satu script untuk install & kelola server VPN di VPS:
 
 | # | Layanan | Protocol | Port |
 |---|---------|----------|------|
-| 1 | **3x-ui** (panel Xray) | VMess, VLESS, Trojan, Shadowsocks, Reality, WireGuard, Hysteria2, dll. | acak, lihat file kredensial |
+| 1 | **ZET UI** (panel Xray — fork 3x-ui) | VMess, VLESS, Trojan, Shadowsocks, Reality, WireGuard, Hysteria2, dll. | acak, lihat file kredensial |
 | 2 | **OpenVPN** | OpenVPN | `1194/udp` |
 | 3 | **L2TP/IPsec** (Libreswan + xl2tpd) | L2TP over IPsec | `500/udp`, `4500/udp`, `1701/udp` |
 | 4 | **IKEv2/IPsec** (strongSwan) | IKEv2 | `500/udp`, `4500/udp` |
@@ -20,11 +20,11 @@ Satu script untuk install & kelola server VPN di VPS:
 
 ## Fitur
 
-- **8 layanan dalam satu script** — 3x-ui (panel Xray: VMess, VLESS, Trojan, Shadowsocks, Reality, WireGuard, Hysteria2), OpenVPN, L2TP/IPsec, IKEv2/IPsec, WireGuard, Shadowsocks, SSH, dan SSH Tunnel (Dropbear).
+- **8 layanan dalam satu script** — ZET UI (panel Xray: VMess, VLESS, Trojan, Shadowsocks, Reality, WireGuard, Hysteria2), OpenVPN, L2TP/IPsec, IKEv2/IPsec, WireGuard, Shadowsocks, SSH, dan SSH Tunnel (Dropbear).
 - **Kredensial otomatis & tersimpan** — semua user, password, PSK, port & file client dihasilkan otomatis dan disimpan di `/root/vpn-credentials.txt` (mode 600, hanya root yang bisa baca).
 - **File client siap pakai** — `.ovpn`, WireGuard `.conf` + QR code (PNG), IKEv2 `.p12` + `.mobileconfig`; tinggal unduh & import di HP/PC.
 - **Kelola user via CLI** — tambah/daftar/hapus user untuk semua layanan tanpa edit config manual (`user openvpn|wireguard|l2tp|ikev2|shadowsocks add/list/remove`).
-- **SSL Let's Encrypt otomatis** — panel 3x-ui bisa diamankan dengan SSL (domain atau IP) tanpa setup manual.
+- **SSL Let's Encrypt otomatis** — panel ZET UI bisa diamankan dengan SSL (domain atau IP) tanpa setup manual.
 - **Firewall otomatis** — semua port VPN dibuka di ufw/firewalld jika aktif.
 - **Otomasi / tanpa prompt** — semua pilihan install bisa lewat env (`VPN_SSL_MODE`, `VPN_IPSEC_MODE`, dll) untuk cloud-init.
 - **Uninstall bersih** — hapus semua layanan VPN + file kredensial (SSH tetap aman).
@@ -37,7 +37,7 @@ $ bash install-vpn.sh panel check
 ==================================================
   CEK PANEL 3x-UI & KONFLIK PORT INBOUND
 ==================================================
-[OK] Panel 3x-ui      : aktif
+[OK] Panel ZET UI      : aktif
 [OK] Xray (core)      : berjalan
 [OK] Semua port inbound panel aman (tidak bentrok dengan layanan sistem).
 
@@ -56,7 +56,7 @@ Client WireGuard (wg0):
 3. [Port yang harus dibuka](#3-port-yang-harus-dibuka)
 4. [Kelola user VPN](#4-kelola-user-vpn)
 5. [Panduan Client](#5-panduan-client)
-   - [3x-ui / Xray (VMess, VLESS, Trojan, Shadowsocks)](#51-3x-ui--xray-vmess-vless-trojan-shadowsocks)
+   - [ZET UI / Xray (VMess, VLESS, Trojan, Shadowsocks)](#51-zet-ui--xray-vmess-vless-trojan-shadowsocks)
    - [OpenVPN](#52-openvpn)
    - [L2TP/IPsec](#53-l2tpipsec)
    - [IKEv2/IPsec](#54-ikevipsec)
@@ -111,7 +111,7 @@ Selama proses install akan ada beberapa pertanyaan:
 
 | Prompt | Pilihan | Keterangan |
 |--------|---------|------------|
-| **SSL panel 3x-ui** | `1` Domain / `2` IP / `3` Lewati | SSL Let's Encrypt. Butuh port 80 terbuka. Domain butuh DNS A record ke IP VPS. |
+| **SSL panel ZET UI** | `1` Domain / `2` IP / `3` Lewati | SSL Let's Encrypt. Butuh port 80 terbuka. Domain butuh DNS A record ke IP VPS. |
 | **IPsec mode** | `1` L2TP / `2` IKEv2 / `3` Lewati | **Pilih salah satu.** L2TP universal tapi lambat. IKEv2 lebih cepat & recommended. Tidak bisa keduanya (berbagi port 500/4500). |
 | **Install WireGuard?** | `Y/n` | Otomatis dibuat client `wgclient1`. |
 | **Install Shadowsocks?** | `Y/n` | Otomatis dibuat user `ss1` (port & password acak). |
@@ -135,13 +135,13 @@ Di **panel VPS provider** (dan firewall server jika aktif), buka port berikut:
 |------|----------|-------|
 | `22` | tcp | SSH |
 | `80` | tcp | Validasi SSL Let's Encrypt (hanya jika pakai SSL) |
-| *port panel* | tcp | Panel 3x-ui (acak — lihat `/root/vpn-credentials.txt`) |
+| *port panel* | tcp | Panel ZET UI (acak — lihat `/root/vpn-credentials.txt`) |
 | `1194` | udp | OpenVPN |
 | `500`, `4500`, `1701` | udp | L2TP/IPsec |
 | `51820` | udp | WireGuard |
 | `443` | tcp | SSH Tunnel (Dropbear — lihat `/etc/default/dropbear`) |
 | *port Shadowsocks* | tcp & udp | Per-user (acak saat dibuat) — buka juga |
-| *port inbound Xray* | tcp | Dibuat per-inbound dari panel 3x-ui — buka juga |
+| *port inbound Xray* | tcp | Dibuat per-inbound dari panel ZET UI — buka juga |
 
 > Jika `ufw`/`firewalld` aktif di server, script otomatis membuka port di atas. Kalau tidak aktif, cukup buka di panel VPS provider.
 
@@ -191,25 +191,25 @@ File client yang dihasilkan:
 | IKEv2 | `/root/ikev2-clients/<nama>.p12` (password: vpn) + `.mobileconfig` |
 | Shadowsocks | cukup catat port, password & method (ditampilkan saat `add`) |
 
-### Dua lapis layanan: sistem vs panel 3x-ui
+### Dua lapis layanan: sistem vs panel ZET UI
 
 `install-vpn.sh` memasang **dua lapis yang independen** untuk protokol yang sama:
 
-| Protokol | Lapisan sistem (daemon mandiri) | Lapisan panel (inbound 3x-ui) |
+| Protokol | Lapisan sistem (daemon mandiri) | Lapisan panel (inbound ZET UI) |
 |----------|-------------------------------|-------------------------------|
 | Shadowsocks | `ss1` (shadowsocks-libev) — port `11153` tcp+udp | inbound SS — port tinggi bebas, misal `20003` |
 | WireGuard | `wg0` (kernel, wg-quick) — port `51820/udp` | inbound WG (userspace xray) — port tinggi bebas, misal `20002` |
 
 **Kenapa dua-duanya?**
 
-- **Lapisan sistem** dipasang sebagai daemon mandiri — **tidak bergantung panel**. Kalau 3x-ui mati/error, layanan ini tetap jalan. Dikelola via CLI (`bash install-vpn.sh user shadowsocks/wireguard add ...`).
-- **Lapisan panel** adalah inbound di dalam Xray/3x-ui — punya fitur lebih (multi-user, pencatatan traffic, subscription link, UI panel). Dikelola dari panel/API.
+- **Lapisan sistem** dipasang sebagai daemon mandiri — **tidak bergantung panel**. Kalau ZET UI mati/error, layanan ini tetap jalan. Dikelola via CLI (`bash install-vpn.sh user shadowsocks/wireguard add ...`).
+- **Lapisan panel** adalah inbound di dalam Xray/ZET UI — punya fitur lebih (multi-user, pencatatan traffic, subscription link, UI panel). Dikelola dari panel/API.
 
 **Apakah bentrok? Tidak** — selama **port-nya berbeda**. Kedua lapisan bisa berjalan bersamaan karena masing-masing mendengarkan di port sendiri (contoh nyata: `ss-server` di `11153` + inbound SS xray di `20003`; `wg0` di `51820` + inbound WG xray di `20002`).
 
-### Cek panel 3x-ui & konflik port inbound
+### Cek panel ZET UI & konflik port inbound
 
-`install-vpn.sh` memasang **3x-ui (panel Xray)** dan layanan VPN sistem di server yang sama. Inbound yang dibuat di panel **tidak boleh memakai port layanan sistem** — kalau bentrok, xray crash-loop dan semua VPN ikut mati (pernah terjadi: inbound WireGuard di port `51820` dibuat di panel, padahal port itu dipakai WireGuard sistem).
+`install-vpn.sh` memasang **ZET UI (panel Xray)** dan layanan VPN sistem di server yang sama. Inbound yang dibuat di panel **tidak boleh memakai port layanan sistem** — kalau bentrok, xray crash-loop dan semua VPN ikut mati (pernah terjadi: inbound WireGuard di port `51820` dibuat di panel, padahal port itu dipakai WireGuard sistem).
 
 Jalankan kapan saja untuk memastikan aman:
 
@@ -223,7 +223,7 @@ Cek ini juga otomatis dijalankan di akhir install. Port yang dipakai sistem — 
 |------|---------------|
 | `22/tcp` | SSH |
 | `80/tcp`, `443/tcp` | Web/nginx (website) |
-| `6871/tcp` | Panel 3x-ui |
+| `6871/tcp` | Panel ZET UI |
 | `1194/udp` | OpenVPN |
 | `500/udp`, `4500/udp`, `1701/udp` | IPsec (IKEv2/L2TP) |
 | `51820/udp` | WireGuard |
@@ -236,7 +236,7 @@ Saran: pakai port tinggi yang bebas untuk inbound panel, misal `20000`–`29999`
 
 ## 5. Panduan Client
 
-### 5.1 3x-ui / Xray (VMess, VLESS, Trojan, Shadowsocks)
+### 5.1 ZET UI / Xray (VMess, VLESS, Trojan, Shadowsocks)
 
 **1. Buat inbound di panel**
 
@@ -427,7 +427,7 @@ bash install-vpn.sh uninstall
 VPN_UNINSTALL_YES=yes bash install-vpn.sh uninstall
 ```
 
-Yang dihapus: 3x-ui, OpenVPN (+ file `.ovpn`), L2TP/IPsec (user dibackup ke `/etc/ppp/chap-secrets.bak-uninstall`), IKEv2/IPsec (sertifikat + config strongSwan), WireGuard, Shadowsocks, paket-paket terkait, aturan firewall, dan `/root/vpn-credentials.txt`.
+Yang dihapus: ZET UI, OpenVPN (+ file `.ovpn`), L2TP/IPsec (user dibackup ke `/etc/ppp/chap-secrets.bak-uninstall`), IKEv2/IPsec (sertifikat + config strongSwan), WireGuard, Shadowsocks, paket-paket terkait, aturan firewall, dan `/root/vpn-credentials.txt`.
 
 ---
 
@@ -455,7 +455,7 @@ bash install-vpn.sh
 
 ## 8. FAQ & Troubleshooting
 
-**Q: Port panel 3x-ui berapa?**
+**Q: Port panel ZET UI berapa?**
 Panel memakai port **acak** (1024–62000) saat install. Lihat `XUI_PANEL_PORT` di `/root/vpn-credentials.txt` (atau `/etc/x-ui/install-result.env`).
 
 **Q: Client tidak bisa connect ke OpenVPN/WireGuard/L2TP?**
@@ -480,7 +480,7 @@ Limitasi L2TP: dua perangkat di belakang NAT yang sama tidak bisa connect bersam
 ## 9. Tips Keamanan
 
 - **SSH**: gunakan kunci SSH, nonaktifkan `PermitRootLogin` jika memungkinkan, atau minimal ganti password.
-- **Panel 3x-ui**: tanpa SSL, akses panel lewat **SSH tunnel** saja:
+- **Panel ZET UI**: tanpa SSL, akses panel lewat **SSH tunnel** saja:
   ```bash
   ssh -L 2222:127.0.0.1:<port_panel> root@IP_VPS
   # lalu buka http://localhost:2222 di browser
