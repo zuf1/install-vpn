@@ -88,6 +88,7 @@ apt-get update && apt-get upgrade -y && reboot
 Upload `install-vpn.sh` ke VPS
 ```bash
   wget -O install-vpn.sh https://raw.githubusercontent.com/zuf1/install-vpn/main/install-vpn.sh
+```
 lalu:
 
 ```bash
