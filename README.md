@@ -77,7 +77,6 @@ Client WireGuard (wg0):
 - OS harus fresh atau setidaknya tidak ada layanan yang memakai port yang sama.
 
 ```bash
-sudo -i
 apt-get update && apt-get upgrade -y && reboot
 ```
 
@@ -87,12 +86,11 @@ apt-get update && apt-get upgrade -y && reboot
 
 Upload `install-vpn.sh` ke VPS
 ```bash
-  wget -O install-vpn.sh https://raw.githubusercontent.com/zuf1/install-vpn/main/install-vpn.sh
+wget -O install-vpn.sh https://raw.githubusercontent.com/zuf1/install-vpn/main/install-vpn.sh
 ```
 lalu:
 
 ```bash
-sudo -i
 bash install-vpn.sh
 ```
 
